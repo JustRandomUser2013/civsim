@@ -1,13 +1,17 @@
 import pygame as pg
 import random
 import hashlib
-
+import os
 
 
 def load_texture(name):
-    return pg.image.load(f"textures/{name}.png")
-
-
+    filepath = f"textures/{name}.png"
+    if not os.path.isfile(filepath):
+        print(f"Ошибка: файл {filepath} не найден!")
+        surface = pg.Surface((16, 16))
+        surface.fill((255, 0, 255))
+        return surface
+    return pg.image.load(filepath)
 
 PLAIN = 0
 FOREST = 1
@@ -33,14 +37,10 @@ NEIGHS = [(-1, 0), (1, 0), (0, -1), (0, 1)]
 screen = pg.display.set_mode((800, 800))
 pg.display.set_caption("Цивилизация")
 
-
-
 class Tile:
     def __init__(self, tile_type=PLAIN, overlay=OVERLAY_NONE):
         self.type = tile_type
         self.overlay = overlay
-
-
 
 class World:
     def __init__(self, w, h, seed=None):
@@ -89,7 +89,6 @@ class World:
                 break
 
     def fix_clusters(self, tile_type, iters=2):
-        print(f"Фикс кластеров")
         for _ in range(iters):
             to_fill = []
             to_erase = []
@@ -97,17 +96,19 @@ class World:
             for x in range(self.w):
                 for y in range(self.h):
                     tile = self.get_tile(x, y)
-                    if tile.type not in [PLAIN, tile_type]:
-                        continue
-                    same = 0
-                    for dx, dy in NEIGHS:
-                        neigh = self.get_tile(x + dx, y + dy)
-                        if neigh and neigh.type == tile_type:
-                            same += 1
-                    if same >= 3 and tile.type == PLAIN:
-                        to_fill.append((x, y))
-                    elif same <= 1 and tile.type == tile_type:
-                        to_erase.append((x, y))
+            if tile.type not in [PLAIN, tile_type]:
+                continue
+
+            same = 0
+            for dx, dy in NEIGHS:
+                neigh = self.get_tile(x + dx, y + dy)
+                if neigh and neigh.type == tile_type:
+                    same += 1
+
+            if same >= 3 and tile.type == PLAIN:
+                to_fill.append((x, y))
+            elif same <= 1 and tile.type == tile_type:
+                to_erase.append((x, y))
 
             for x, y in to_fill:
                 self.get_tile(x, y).type = tile_type
@@ -146,14 +147,14 @@ class World:
                 tile = self.get_tile(x, y)
                 if tile.type == MOUNTAIN:
                     ok = True
-                    for dx, dy in NEIGHS:
-                        neigh = self.get_tile(x + dx, y + dy)
-                        if not neigh or neigh.type != MOUNTAIN:
-                            ok = False
-                    hash_prob = self.hash_coords(x, y, "iron_prob")
-                    probability = (hash_prob % 100) / 100
-                    if ok and probability < 0.1:
-                        tile.overlay = OVERLAY_IRON
+            for dx, dy in NEIGHS:
+                neigh = self.get_tile(x + dx, y + dy)
+                if not neigh or neigh.type != MOUNTAIN:
+                    ok = False
+            hash_prob = self.hash_coords(x, y, "iron_prob")
+            probability = (hash_prob % 100) / 100
+            if ok and probability < 0.1:
+                tile.overlay = OVERLAY_IRON
 
     def draw(self, screen):
         for y in range(self.h):
@@ -162,8 +163,6 @@ class World:
                 tile_overlay = self.get_tile(x, y).overlay
                 screen.blit(textures[tile_type], (x * 16, y * 16))
                 screen.blit(overlay_textures[tile_overlay], (x * 16, y * 16))
-
-
 
 w, h = 50, 50
 world = World(w, h)
