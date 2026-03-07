@@ -17,7 +17,7 @@ class Camera:
         self.y = 0
         self.zoom = DEFAULT_ZOOM
 
-    def handle_zoom(self, mouse_pos, direction, world):
+    def handle_zoom(self, mouse_pos, direction, renderer):
         mx, my = mouse_pos
         wx, wy = (mx - self.x) / self.zoom, (my - self.y) / self.zoom
         old_zoom = self.zoom
@@ -27,7 +27,7 @@ class Camera:
             self.zoom = max(MIN_ZOOM, self.zoom - ZOOM_STEP)
         
         if old_zoom != self.zoom:
-            new_surf = world.update_view(self.zoom)
+            new_surf = renderer.update_view(self.zoom)
             self.x = mx - wx * self.zoom
             self.y = my - wy * self.zoom
             return new_surf
@@ -47,6 +47,12 @@ class Camera:
             self.y = min(0, max(self.y, SCREEN_SIZE - vh))
         else:
             self.y = (SCREEN_SIZE - vh) // 2
+
+    def screen_to_world(self, mouse_pos):
+        mx, my = mouse_pos
+        tx = int((mx - self.x) / (CELL_SIZE * self.zoom))
+        ty = int((my - self.y) / (CELL_SIZE * self.zoom))
+        return tx, ty
 
 class WorldRenderer:
     def __init__(self, world):
@@ -68,7 +74,23 @@ class WorldRenderer:
                 if t.overlay: self.full_surf.blit(self.overlays[t.overlay], pos)
 
     def update_view(self, zoom):
-        return pg.transform.smoothscale(self.full_surf, (int(self.world.w * CELL_SIZE * zoom), int(self.world.h * CELL_SIZE * zoom)))
+        size = (int(self.world.w * CELL_SIZE * zoom), 
+                int(self.world.h * CELL_SIZE * zoom))
+        return pg.transform.smoothscale(self.full_surf, size)
+
+    def draw_ui(self, screen, camera, world):
+        tx, ty = camera.screen_to_world(pg.mouse.get_pos())
+        tile = world.get_tile(tx, ty)
+        if tile:
+            # Отрисовка рамки
+            rect = (tx * CELL_SIZE * camera.zoom + camera.x, 
+                    ty * CELL_SIZE * camera.zoom + camera.y, 
+                    CELL_SIZE * camera.zoom, CELL_SIZE * camera.zoom)
+            pg.draw.rect(screen, SELECT_COLOR, rect, 2)
+            
+            # Инфо-текст (простейший консольный вывод для начала)
+            f, p, g = tile.get_resources()
+            pg.display.set_caption(f"Coord: {tx},{ty} | {TILE_NAMES[tile.type]} {OVERLAY_NAMES[tile.overlay]} | F:{f} P:{p} G:{g}")
 
 def main():
     pg.init()
@@ -79,6 +101,7 @@ def main():
     camera = Camera()
     dragging = False
     view_surf = renderer.update_view(camera.zoom)
+    
     while True:
         for event in pg.event.get():
             if event.type == pg.QUIT: pg.quit(); return
@@ -94,9 +117,13 @@ def main():
                 if event.button == 3: dragging = False
             elif event.type == pg.MOUSEMOTION and dragging:
                 camera.handle_move(event.rel)
+        
         camera.apply_limits(view_surf)
         screen.fill((30, 30, 30))
         screen.blit(view_surf, (camera.x, camera.y))
+        
+        renderer.draw_ui(screen, camera, world)
+        
         pg.display.flip()
         clock.tick(FPS)
 

@@ -1,25 +1,25 @@
 # --- Настройки экрана и FPS ---
-SCREEN_SIZE = 800  # Ширина и высота окна
-FPS = 60           # Ограничение кадров в секунду
+SCREEN_SIZE = 800
+FPS = 60
 
 # --- Размеры игрового мира ---
-W_TILES = 100      # Количество клеток по горизонтали
-H_TILES = 100      # Количество клеток по вертикали
-CELL_SIZE = 16     # Базовый размер тайла (16x16 пикселей)
+W_TILES = 100
+H_TILES = 100
+CELL_SIZE = 16
 
 # --- Параметры камеры ---
-DEFAULT_ZOOM = 1.0 # Начальный масштаб
-MIN_ZOOM = 0.5     # Минимальное отдаление
-MAX_ZOOM = 3.0     # Максимальное приближение
-ZOOM_STEP = 0.1    # Шаг масштабирования при прокрутке
+DEFAULT_ZOOM = 1.0
+MIN_ZOOM = 0.5
+MAX_ZOOM = 3.0
+ZOOM_STEP = 0.1
 
 # --- Настройки генерации ---
-FOREST_CLUSTERS = 20     # Количество лесных массивов
-FOREST_SIZE = 60         # Размер одного леса
-MOUNTAIN_CLUSTERS = 10   # Количество горных хребтов
-MOUNTAIN_SIZE = 40       # Размер одной горы
-CLUSTER_PROBABILITY = 0.7 # Шанс разрастания кластера (0.7 = 70%)
-IRON_PROBABILITY = 10    # Шанс появления железа в горах (в %)
+FOREST_CLUSTERS = 20
+FOREST_SIZE = 60
+MOUNTAIN_CLUSTERS = 10
+MOUNTAIN_SIZE = 40
+CLUSTER_PROBABILITY = 0.7
+IRON_PROBABILITY = 10
 
 # --- Идентификаторы объектов ---
 TILE_PLAIN = 0
@@ -27,3 +27,24 @@ TILE_FOREST = 1
 TILE_MOUNTAIN = 2
 OVERLAY_NONE = 0
 OVERLAY_IRON = 1
+
+# --- Характеристики тайлов (Еда, Продукция, Золото) ---
+# Формат: TILE_ID: (Food, Prod, Gold)
+TILE_STATS = {
+    TILE_PLAIN: (2, 1, 1),
+    TILE_FOREST: (1, 2, 0),
+    TILE_MOUNTAIN: (0, 1, 0)
+}
+
+# Добавочные статы от оверлеев
+OVERLAY_STATS = {
+    OVERLAY_NONE: (0, 0, 0),
+    OVERLAY_IRON: (0, 3, 0)
+}
+
+# Названия для интерфейса
+TILE_NAMES = {TILE_PLAIN: "Plain", TILE_FOREST: "Forest", TILE_MOUNTAIN: "Mountain"}
+OVERLAY_NAMES = {OVERLAY_NONE: "", OVERLAY_IRON: "Iron"}
+
+# --- Визуал ---
+SELECT_COLOR = (255, 255, 255) # Цвет рамки выделения
