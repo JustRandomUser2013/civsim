@@ -6,7 +6,7 @@ from settings import *
 
 def load_texture(name):
     path = f"textures/{name}.png"
-    if os.path.exists(path):
+    if os.path.isfile(path):
         return pg.image.load(path).convert_alpha()
     surf = pg.Surface((CELL_SIZE, CELL_SIZE))
     surf.fill((255, 0, 255))
@@ -84,11 +84,8 @@ class World:
         for i in range(MOUNTAIN_CLUSTERS):
             sx, sy = self.hash_coords(i, i) % self.w, self.hash_coords(i, i*2) % self.h
             self.cluster(sx, sy, TILE_MOUNTAIN, MOUNTAIN_SIZE)
-        
-        # Добавил вызовы сглаживания
         self.fix_clusters(TILE_FOREST)
         self.fix_clusters(TILE_MOUNTAIN)
-        
         self.place_iron()
 
     def render_all(self):
@@ -136,5 +133,6 @@ def main():
         pg.display.flip()
         clock.tick(FPS)
 
+pg.quit()
 if __name__ == "__main__":
     main()
