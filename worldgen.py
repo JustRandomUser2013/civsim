@@ -8,9 +8,15 @@ class Tile:
         self.type = t_type
         self.overlay = overlay
 
+    def get_resources(self):
+        base_f, base_p, base_g = TILE_STATS[self.type]
+        ov_f, ov_p, ov_g = OVERLAY_STATS[self.overlay]
+        return base_f + ov_f, base_p + ov_p, base_g + ov_g
+
 class World:
     def __init__(self, w, h, seed=None):
-        self.w, self.h = w, h
+        self.w = w
+        self.h = h
         self.seed = seed if seed is not None else random.randint(0, 10**10)
         self.tiles = [[Tile() for _ in range(h)] for _ in range(w)]
         self.generate()
@@ -32,7 +38,8 @@ class World:
             if (x, y) in visited or x < 0 or x >= self.w or y < 0 or y >= self.h:
                 continue
             visited.add((x, y))
-            if self.tiles[x][y].type != TILE_PLAIN: continue
+            if self.tiles[x][y].type != TILE_PLAIN:
+                continue
             self.tiles[x][y].type, steps = t_type, steps + 1
             for dx, dy in neighs:
                 if (self.hash_coords(x, y, f"{dx}{dy}") % 1000) / 1000 < CLUSTER_PROBABILITY:
@@ -44,8 +51,8 @@ class World:
             for x in range(self.w):
                 for y in range(self.h):
                     tile = self.tiles[x][y]
-                    same = sum(1 for dx, dy in [(-1,0),(1,0),(0,-1),(0,1)] 
-                               if (n := self.get_tile(x+dx, y+dy)) and n.type == tile_type)
+                    same = sum(1 for dx, dy in [(-1, 0), (1, 0), (0, -1), (0, 1)] 
+                               if (n := self.get_tile(x + dx, y + dy)) and n.type == tile_type)
                     if same >= 3 and tile.type == TILE_PLAIN:
                         to_change.append((x, y, tile_type))
                     elif same <= 1 and tile.type == tile_type:
@@ -67,8 +74,6 @@ class World:
         for i in range(MOUNTAIN_CLUSTERS):
             sx, sy = self.hash_coords(i, i) % self.w, self.hash_coords(i, i*2) % self.h
             self.cluster(sx, sy, TILE_MOUNTAIN, MOUNTAIN_SIZE)
-
         self.fix_clusters(TILE_FOREST)
         self.fix_clusters(TILE_MOUNTAIN)
-        
         self.place_iron()
