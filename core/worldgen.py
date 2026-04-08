@@ -1,8 +1,7 @@
 import random
 import hashlib
 from settings import *
-from units import UnitGroup, Unit
-
+from core.unitsys import UnitGroup, Unit
 
 class Tile:
     __slots__ = ('type', 'overlay')
@@ -18,14 +17,14 @@ class Tile:
 
 
 class World:
-    def __init__(self, w, h, seed=None):
+    def __init__(self, w, h, units, seed=None):
         self.w = w
         self.h = h
         self.seed = seed if seed is not None else random.randint(0, 10**10)
         self.tiles = [[Tile() for _ in range(h)] for _ in range(w)]
         self.unit_groups = [[None for _ in range(h)] for _ in range(w)]
         # Создаем начального юнита
-        start_unit = Unit(0, self, 25, 25)
+        start_unit = units[0]["class"](self, 25, 25)
         self.unit_groups[25][25] = UnitGroup([start_unit], 25, 25, self)
         self.generate()
 

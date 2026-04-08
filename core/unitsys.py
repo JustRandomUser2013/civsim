@@ -1,6 +1,5 @@
 import random
 
-
 class UnitGroup:
     def __init__(self, units, x, y, world):
         self.x = x
@@ -47,16 +46,14 @@ class UnitGroup:
 
 
 class Unit:
-    def __init__(self, unit_type, world, x, y):
-        self.type = unit_type
+    def __init__(self, world, x, y):
         self.world = world
         self.x = x
         self.y = y
         self.group = None
 
     def update(self, world):
-        if random.random() < 0.05:
-            self.move(random.randint(-1, 1), random.randint(-1, 1))
+        pass
 
     def move(self, dx, dy):
         new_x = max(0, min(self.world.w - 1, self.x + dx))

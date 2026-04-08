@@ -1,8 +1,9 @@
 import pygame as pg
 import os
 from settings import *
-from worldgen import World
-
+from core.worldgen import World, Tile
+from core.unitsys import Unit
+from importlib import import_module
 
 def load_texture(name):
     path = f"textures/{name}.png"
@@ -12,6 +13,17 @@ def load_texture(name):
     surf.fill((255, 0, 255))
     return surf
 
+def get_object_texture(obj):
+    if isinstance(obj, Tile):
+        texture = pg.Surface((CELL_SIZE, CELL_SIZE))
+        texture.blit(tile_textures[obj.type], (0, 0))
+        if obj.overlay:
+            texture.blit(overlay_textures[obj.overlay], (0, 0))
+    elif isinstance(obj, Unit):
+        texture = units[obj.id]["texture"]
+    else:
+        raise TypeError(type(obj))
+    return texture
 
 class Camera:
     def __init__(self):
@@ -61,26 +73,15 @@ class WorldRenderer:
     def __init__(self, world):
         self.world = world
         self.full_surf = pg.Surface((world.w * CELL_SIZE, world.h * CELL_SIZE))
-        self.textures = [
-            load_texture("tiles/plain"),
-            load_texture("tiles/forest"),
-            load_texture("tiles/mountain")
-        ]
-        self.overlays = [
-            pg.Surface((0, 0), pg.SRCALPHA),
-            load_texture("overlays/iron")
-        ]
-        self.unit_textures = [load_texture("units/test")]
         self.render_all()
 
     def render_all(self):
         for y in range(self.world.h):
             for x in range(self.world.w):
                 t = self.world.tiles[x][y]
+                tile_texture = get_object_texture(t)
                 pos = (x * CELL_SIZE, y * CELL_SIZE)
-                self.full_surf.blit(self.textures[t.type], pos)
-                if t.overlay:
-                    self.full_surf.blit(self.overlays[t.overlay], pos)
+                self.full_surf.blit(tile_texture, pos)
 
     def update_view(self, zoom):
         size = (int(self.world.w * CELL_SIZE * zoom),
@@ -97,7 +98,7 @@ class WorldRenderer:
                     uy = y * CELL_SIZE * camera.zoom + camera.y
                     u_size = int(CELL_SIZE * camera.zoom)
                     img = pg.transform.scale(
-                        self.unit_textures[group.main_unit.type],
+                        get_object_texture(group.main_unit),
                         (u_size, u_size)
                     )
                     screen.blit(img, (ux, uy))
@@ -115,12 +116,39 @@ class WorldRenderer:
                    f"{OVERLAY_NAMES[tile.overlay]} | F:{f} P:{p} G:{g}"
             pg.display.set_caption(info)
 
+def init():
+    global units, tile_textures, overlay_textures
+    units={}
+    for file in os.listdir('units'):
+        if not os.path.isfile(os.path.join('units', file)):
+            continue
+        fname=file.split('.')[0]
+        if not fname.isalnum():
+            continue
+        unit_cls = import_module(f'units.{fname}').register_unit()
+        units[unit_cls.id] = {
+            "name": unit_cls.name,
+            "class": unit_cls,
+            "texture": load_texture(f'units/{unit_cls.texture}')
+            }
+    
+    tile_textures = [
+        load_texture("tiles/plain"),
+        load_texture("tiles/forest"),
+        load_texture("tiles/mountain")
+    ]
+    overlay_textures = [
+        pg.Surface((0, 0), pg.SRCALPHA),
+        load_texture("overlays/iron")
+    ]
+    
 
 def main():
     pg.init()
     screen = pg.display.set_mode((SCREEN_SIZE, SCREEN_SIZE))
+    init()
     clock = pg.time.Clock()
-    world = World(W_TILES, H_TILES)
+    world = World(W_TILES, H_TILES, units)
     renderer = WorldRenderer(world)
     camera = Camera()
     dragging = False
@@ -161,7 +189,6 @@ def main():
         pg.display.flip()
         clock.tick(FPS)
         world.update()
-
 
 if __name__ == "__main__":
     main()
